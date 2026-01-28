@@ -230,6 +230,59 @@
         explosions.push({ particles, startTime: performance.now() / 1000 });
       }
 
+      // Pixel art drawing function for aliens (classic Space Invaders style)
+      // Pattern: blue retro pixel aliens with 8-bit aesthetic
+      function drawAlienPixelArt(ctx, x, y, size) {
+        // Pixel size is based on total width divided by grid (34px / 6 = ~5.67px per cell)
+        const pixelSize = size / 6;
+
+        // Blue color palette: main color and darker shade for depth
+        const darkBlue = "#0a4a9f"; // Darker blue
+        const brightBlue = "#1e7fff"; // Bright blue
+
+        // 8x6 pixel grid pattern for classic Space Invaders alien
+        // 1 = bright blue, 2 = dark blue, 0 = transparent
+        const pattern = [
+          [0, 0, 1, 1, 1, 0],
+          [0, 1, 1, 1, 1, 1],
+          [1, 1, 1, 1, 1, 1],
+          [1, 2, 1, 1, 2, 1],
+          [1, 1, 1, 1, 1, 1],
+          [2, 0, 2, 2, 0, 2],
+        ];
+
+        // Draw pixel grid
+        for (let row = 0; row < pattern.length; row++) {
+          for (let col = 0; col < pattern[row].length; col++) {
+            const pixelValue = pattern[row][col];
+
+            if (pixelValue === 1) {
+              // Bright blue pixel
+              ctx.fillStyle = brightBlue;
+              ctx.fillRect(
+                x + col * pixelSize,
+                y + row * pixelSize,
+                pixelSize,
+                pixelSize,
+              );
+            } else if (pixelValue === 2) {
+              // Dark blue pixel for depth/shading
+              ctx.fillStyle = darkBlue;
+              ctx.fillRect(
+                x + col * pixelSize,
+                y + row * pixelSize,
+                pixelSize,
+                pixelSize,
+              );
+            }
+          }
+        }
+
+        // Add subtle glow effect to the alien
+        ctx.shadowColor = brightBlue;
+        ctx.shadowBlur = 8;
+      }
+
       // Alien class
       class Alien {
         constructor(r, c, x, y) {
@@ -239,50 +292,20 @@
           this.y = y;
           this.hp = 1;
           this.anim = 0;
-          this.colors = ["#f00", "#f80", "#ff0", "#0f0"]; // Neon colors by row
-          this.color = this.colors[r % this.colors.length];
         }
 
         draw(ctx, dt) {
           this.anim += dt;
           const w = aliens.w;
           const h = aliens.h;
-          const centerX = this.x + w / 2;
-          const centerY = this.y + h / 2;
 
           ctx.save();
-          ctx.translate(centerX, centerY);
-          ctx.rotate(Math.sin(this.anim * 2) * 0.05); // Slight wobble
-          ctx.translate(-w / 2, -h / 2);
 
-          // Glow effect
-          ctx.shadowColor = this.color;
-          ctx.shadowBlur = 15;
-          ctx.shadowOffsetX = 0;
-          ctx.shadowOffsetY = 0;
+          // Slight vertical wobble for animation
+          const wobbleOffset = Math.sin(this.anim * 3) * 1.5;
 
-          // Hull: ellipse
-          ctx.fillStyle = this.color;
-          ctx.beginPath();
-          ctx.ellipse(w / 2, h * 0.6, w / 2, h * 0.4, 0, 0, 2 * Math.PI);
-          ctx.fill();
-
-          // Dome: arc
-          ctx.beginPath();
-          ctx.arc(w / 2, h * 0.3, w * 0.3, Math.PI, 0);
-          ctx.fill();
-
-          // Lights: blinking circles at bottom
-          const lights = 3;
-          for (let i = 0; i < lights; i++) {
-            const lx = ((i + 1) * w) / (lights + 1);
-            const ly = h * 0.8;
-            ctx.fillStyle =
-              Math.sin(this.anim * 10 + i * 2) > 0 ? "#fff" : this.color;
-            ctx.beginPath();
-            ctx.arc(lx, ly, 3, 0, 2 * Math.PI);
-            ctx.fill();
-          }
+          // Draw pixel art alien
+          drawAlienPixelArt(ctx, this.x, this.y + wobbleOffset, w);
 
           ctx.restore();
         }
@@ -592,6 +615,8 @@
         player.bullets.forEach((b) => ctx.fillRect(b.x, b.y, b.w, b.h));
 
         // aliens
+        ctx.shadowColor = "";
+        ctx.shadowBlur = 0;
         aliens.arr.forEach((a) => a.draw(ctx, dt));
 
         // alien bullets
